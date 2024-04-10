@@ -11,6 +11,38 @@ class MyXchangeClient(xchange_client.XChangeClient):
 
     def __init__(self, host: str, username: str, password: str):
         super().__init__(host, username, password)
+    async def spread(self, asset_name):
+        """
+        Asynchronously get the highest bid and the lowest ask for a specific asset,
+        print the spread, and then return only the lowest ask.
+
+        :param asset_name: The name of the asset to retrieve the lowest ask for.
+        :return: The lowest ask for the given asset.
+        """
+        book = self.order_books.get(asset_name)
+
+        if not book:
+            print(f"{asset_name} not found in the order books.")
+            return None
+
+        if book.bids and book.asks:
+            # Sort bids in descending order to get the highest bid.
+            sorted_bids = sorted((k, v) for k, v in book.bids.items() if v != 0)
+            highest_bid = sorted_bids[-1] if sorted_bids else None
+
+            # Sort asks in ascending order to get the lowest ask.
+            sorted_asks = sorted((k, v) for k, v in book.asks.items() if v != 0)
+            lowest_ask = sorted_asks[0] if sorted_asks else None
+
+            if highest_bid and lowest_ask:
+                # Convert the first element of the tuples to integers before calculating the spread.
+                bid_price = int(highest_bid[0])
+                ask_price = int(lowest_ask[0])
+                spread = ask_price - bid_price
+                print(f"Spread for {asset_name} = {spread}")
+                return lowest_ask[0]
+
+        return None
 
     async def bot_handle_cancel_response(self, order_id: str, success: bool, error: Optional[str]) -> None:
 
@@ -25,12 +57,14 @@ class MyXchangeClient(xchange_client.XChangeClient):
 
 
     async def bot_handle_trade_msg(self, symbol: str, price: int, qty: int):
-        print(f" {qty} {symbol} was traded at $ {price}")
+        #print(f" {qty} {symbol} was traded at $ {price}")
+        if (str == "IGM"):
+            self.spread(self, "IGM")
         pass
 
     async def bot_handle_book_update(self, symbol: str) -> None:
         # print("book update")
-        await self.view_books()
+        """await self.view_books()"""
         pass
 
     async def bot_handle_swap_response(self, swap: str, qty: int, success: bool):
@@ -60,14 +94,35 @@ class MyXchangeClient(xchange_client.XChangeClient):
 
     async def trade(self):
         """This is a task that is started right before the bot connects and runs in the background."""
-        await asyncio.sleep(5)
+        await asyncio.sleep(2)
         print("Bot started")
-        '''
+        await self.firesale()
+        for i in range(10):
+            await self.place_order("JMS",1,xchange_client.Side.BUY)
+            await asyncio.sleep(3)
+            await self.place_order("IGM", 5, xchange_client.Side.BUY)
+            await asyncio.sleep(3)
+
+
+            await self.place_order("IGM", 5, xchange_client.Side.SELL)
+            await asyncio.sleep(3)
+            await self.place_order("JMS", 1, xchange_client.Side.SELL)
+            await asyncio.sleep(3)
+            await self.spread("IGM")
+
+
+        await self.firesale()
+
+        """
         # Place market order for individual ETF items
         await self.place_order("EPT",3, xchange_client.Side.BUY)
         await asyncio.sleep(5)
+        await self.place_order("EPT",3, xchange_client.Side.SELL)
+        await asyncio.sleep(5)
+
         await self.place_order("IGM", 3, xchange_client.Side.BUY)
         await asyncio.sleep(5)
+
         await self.place_order("BRV", 4, xchange_client.Side.BUY)
         await asyncio.sleep(5)
 
@@ -85,7 +140,7 @@ class MyXchangeClient(xchange_client.XChangeClient):
         await asyncio.sleep(5)
 
         # View positions again
-        print("My positions:", self.positions)  '''
+        print("My positions:", self.positions)
 
         # Now do opposite, buy 10 ETFs then redeem for individual stocks
         await self.place_order("SCP",10,xchange_client.Side.BUY)
@@ -96,7 +151,7 @@ class MyXchangeClient(xchange_client.XChangeClient):
         await asyncio.sleep(5)
 
         await self.firesale()
-
+        """
 
     async def view_books(self):
         """Prints the books every 3 seconds."""
@@ -108,8 +163,9 @@ class MyXchangeClient(xchange_client.XChangeClient):
                 print(f"Bids for {security}:\n{sorted_bids}")
                 print(f"Asks for {security}:\n{sorted_asks}")
 
+
+    """
     async def view_book_for(self, sec: str):
-        """Prints the books every 3 seconds."""
         while True:
             await asyncio.sleep(3)
             for sec, book in self.order_books.items():
@@ -117,7 +173,7 @@ class MyXchangeClient(xchange_client.XChangeClient):
                 sorted_asks = sorted((k,v) for k,v in book.asks.items() if v != 0)
                 print(f"Bids for {sec}:\n{sorted_bids}")
                 print(f"Asks for {sec}:\n{sorted_asks}")
-
+    """
     async def start(self):
         """
         Creates tasks that can be run in the background. Then connects to the exchange
