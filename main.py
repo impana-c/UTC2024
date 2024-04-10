@@ -4,7 +4,7 @@ from xchangelib import xchange_client
 import asyncio
 
 
-
+# exchange: http://staging.uchicagotradingcompetition.com/
 
 class MyXchangeClient(xchange_client.XChangeClient):
     '''A shell client with the methods that can be implemented to interact with the xchange.'''
