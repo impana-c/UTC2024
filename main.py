@@ -10,11 +10,17 @@ import asyncio
 # 1 - Market make on theoretical value of mean or median
 # 2 - Pairs trade? 
 # 3 - ETF arbitrage, swap fees of $5 so check if basket of stocks + $5 < ETF price 
+# Market make on ETF using theo value - Layer 1
+# Arbitrage: if total cost of basket + 5 < theo etf value 
+# Cancel ALL unfilled orders after 3 seconds, every minute zero positions
+
+# If 3 EPT (lowest ask) + 3 IGM + 4 BRV + $1 (edge)< 10 JCR (lowest bid) ==> BUY basket of stocks, short 10 jcr?
 class MyXchangeClient(xchange_client.XChangeClient):
     '''A shell client with the methods that can be implemented to interact with the xchange.'''
 
     def __init__(self, host: str, username: str, password: str):
         super().__init__(host, username, password)
+        
     async def spread(self, asset_name):
         """
         Asynchronously get the highest bid and the lowest ask for a specific asset,
