@@ -6,6 +6,10 @@ import asyncio
 
 # exchange: http://staging.uchicagotradingcompetition.com/
 # Example bot: https://github.com/UChicagoFM/xchangelib/blob/move_repo/src/xchangelib/examples/example_bot.py
+# Current strategies: 
+# 1 - Market make on theoretical value of mean or median
+# 2 - Pairs trade? 
+# 3 - ETF arbitrage, swap fees of $5 so check if basket of stocks + $5 < ETF price 
 class MyXchangeClient(xchange_client.XChangeClient):
     '''A shell client with the methods that can be implemented to interact with the xchange.'''
 
