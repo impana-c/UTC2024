@@ -5,7 +5,7 @@ import asyncio
 
 
 # exchange: http://staging.uchicagotradingcompetition.com/
-
+# Example bot: https://github.com/UChicagoFM/xchangelib/blob/move_repo/src/xchangelib/examples/example_bot.py
 class MyXchangeClient(xchange_client.XChangeClient):
     '''A shell client with the methods that can be implemented to interact with the xchange.'''
 
