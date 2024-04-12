@@ -107,21 +107,35 @@ class MyXchangeClient(xchange_client.XChangeClient):
         # print({jak_bid})
 
         # Check if the cost of buying the basket + edge is less than the highest bid for ETF 1
-        print({total_stock_cost_scp + self.edge + self.swap_fee - (scp_bid * 10)})
+        scp_diff = total_stock_cost_scp + self.edge + self.swap_fee - (scp_bid * 10)
         # Returns positive values around $400 to $600
-        if total_stock_cost_scp + self.edge + self.swap_fee < scp_bid:
+        if scp_diff < 0:
             await self.place_order("SCP", 10, xchange_client.Side.SELL)
             # Buy the basket of stocks for ETF 1 (SCP)
             await self.place_order("EPT", 3, xchange_client.Side.BUY)
             await self.place_order("IGM", 3, xchange_client.Side.BUY)
             await self.place_order("BRV", 4, xchange_client.Side.BUY)
+        if scp_diff > 0:
+            await self.place_order("SCP", 10, xchange_client.Side.BUY)
+            # Buy the basket of stocks for ETF 1 (SCP)
+            await self.place_order("EPT", 3, xchange_client.Side.SELL)
+            await self.place_order("IGM", 3, xchange_client.Side.SELL)
+            await self.place_order("BRV", 4, xchange_client.Side.SELL)
 
-        if total_stock_cost_jak + self.edge + self.swap_fee < jak_bid:
+        jak_diff = total_stock_cost_jak + self.edge + self.swap_fee - (jak_bid * 10)
+
+        if jak_diff < 0:
             await self.place_order("JAK", 10, xchange_client.Side.SELL)
             # Buy the basket of stocks for ETF 2 (JAK)
             await self.place_order("EPT", 2, xchange_client.Side.BUY)
             await self.place_order("DLO", 5, xchange_client.Side.BUY)
             await self.place_order("MKU", 3, xchange_client.Side.BUY)
+        if jak_diff > 0:
+            await self.place_order("JAK", 10, xchange_client.Side.BUY)
+            # Buy the basket of stocks for ETF 2 (JAK)
+            await self.place_order("EPT", 2, xchange_client.Side.SELL)
+            await self.place_order("DLO", 5, xchange_client.Side.SELL)
+            await self.place_order("MKU", 3, xchange_client.Side.SELL)
 
     async def firesale(self):
         # Sells everything, good for end of round / algo?
