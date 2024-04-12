@@ -19,7 +19,7 @@ class MyXchangeClient(xchange_client.XChangeClient):
     '''A shell client with the methods that can be implemented to interact with the xchange.'''
 
     swap_fee = 5.0
-    edge = 1.0
+    edge = 0.97
 
     def __init__(self, host: str, username: str, password: str):
         super().__init__(host, username, password)
@@ -100,14 +100,16 @@ class MyXchangeClient(xchange_client.XChangeClient):
 
         # Calculate the total cost of buying the basket of stocks for ETF 1 and ETF 2
         if (ept_ask is not None and igm_ask is not None and brv_ask is not None and scp_bid is not None):
-            total_stock_cost_scp = 3 * ept_ask + 3 * igm_ask + 4 * brv_ask
-            scp_diff = total_stock_cost_scp + self.edge + self.swap_fee - (scp_bid * 10)
+            total_stock_cost_scp = 3 * ept_ask + 3 * igm_ask + 4 * brv_ask 
+            total_stock_cost_scp *= self.edge
+            scp_diff = total_stock_cost_scp + self.swap_fee - (scp_bid * 10)
         else:
             scp_diff = None
 
         if (ept_ask is not None and dlo_ask is not None and mku_ask is not None and jak_bid is not None):
             total_stock_cost_jak = 2 * ept_ask + 5 * dlo_ask + 3 * mku_ask
-            jak_diff = total_stock_cost_jak + self.edge + self.swap_fee - (jak_bid * 10)
+            total_stock_cost_jak *= self.edge
+            jak_diff = total_stock_cost_jak + self.swap_fee - (jak_bid * 10)
         else: 
             jak_diff = None
 
