@@ -6,15 +6,15 @@ import asyncio
 
 # exchange: http://staging.uchicagotradingcompetition.com/
 # Example bot: https://github.com/UChicagoFM/xchangelib/blob/move_repo/src/xchangelib/examples/example_bot.py
-# Current strategies: 
+# Current strategies:
 # 1 - Market make on theoretical value of mean or median
-# 2 - Pairs trade? 
-# 3 - ETF arbitrage, swap fees of $5 so check if basket of stocks + $5 < ETF price 
+# 2 - Pairs trade?
+# 3 - ETF arbitrage, swap fees of $5 so check if basket of stocks + $5 < ETF price
 # Market make on ETF using theo value - Layer 1
-# Arbitrage: if total cost of basket + 5 < theo etf value 
+# Arbitrage: if total cost of basket + 5 < theo etf value
 # Cancel ALL unfilled orders after 3 seconds, every minute zero positions
 
-# If 3 EPT (lowest ask) + 3 IGM (lowest ask) + 4 BRV (lowest ask) + $1 (edge) < 10 JCR (highest bid) ==> BUY basket of stocks, short 10 jcr?
+# If 3 EPT (lowest ask) + 3 IGM (lowest ask) + 4 BRV (lowest ask) + $1 (edge) < 10 SCP (highest bid) ==> BUY basket of stocks, short 10 SCP?
 class MyXchangeClient(xchange_client.XChangeClient):
     '''A shell client with the methods that can be implemented to interact with the xchange.'''
 
@@ -23,7 +23,7 @@ class MyXchangeClient(xchange_client.XChangeClient):
 
     def __init__(self, host: str, username: str, password: str):
         super().__init__(host, username, password)
-        
+
     async def spread(self, asset_name):
         """
         Asynchronously get the highest bid and the lowest ask for a specific asset,
@@ -68,9 +68,8 @@ class MyXchangeClient(xchange_client.XChangeClient):
     async def bot_handle_order_rejected(self, order_id: str, reason: str) -> None:
         print("order rejected because of ", reason)
 
-
     async def bot_handle_trade_msg(self, symbol: str, price: int, qty: int):
-        #print(f" {qty} {symbol} was traded at $ {price}")
+        # print(f" {qty} {symbol} was traded at $ {price}")
         if (str == "IGM"):
             self.spread(self, "IGM")
         pass
@@ -87,23 +86,32 @@ class MyXchangeClient(xchange_client.XChangeClient):
     async def long_short_arbitrage(self):
         # Get the lowest asks for each stock
         ept_ask, _ = await self.spread("EPT")
+        # print({ept_ask})
         dlo_ask, _ = await self.spread("DLO")
+        # print({dlo_ask})
         mku_ask, _ = await self.spread("MKU")
+        # print({mku_ask})
         igm_ask, _ = await self.spread("IGM")
+        # print({igm_ask})
         brv_ask, _ = await self.spread("BRV")
+        # print({brv_ask})
 
         # Calculate the total cost of buying the basket of stocks for ETF 1 and ETF 2
-        total_stock_cost_jcr = 3 * ept_ask + 3 * igm_ask + 4 * brv_ask 
-        total_stock_cost_jak = 2 * ept_ask + 5 * dlo_ask + 3 * mku_ask 
+        total_stock_cost_scp = 3 * ept_ask + 3 * igm_ask + 4 * brv_ask
+        total_stock_cost_jak = 2 * ept_ask + 5 * dlo_ask + 3 * mku_ask
 
-        # Get the highest bid for ETF 1 (JCR) and ETF 2 (JAK)
-        _, jcr_bid = await self.spread("JCR")
+        # Get the highest bid for ETF 1 (SCP) and ETF 2 (JAK)
+        _, scp_bid = await self.spread("SCP")
+        # print({scp_bid})
         _, jak_bid = await self.spread("JAK")
+        # print({jak_bid})
 
         # Check if the cost of buying the basket + edge is less than the highest bid for ETF 1
-        if total_stock_cost_jcr + self.edge + self.swap_fee < jcr_bid:
-            await self.place_order("JCR", 10, xchange_client.Side.SELL)
-            # Buy the basket of stocks for ETF 1 (JCR)
+        print({total_stock_cost_scp + self.edge + self.swap_fee - (scp_bid * 10)})
+        # Returns positive values around $400 to $600
+        if total_stock_cost_scp + self.edge + self.swap_fee < scp_bid:
+            await self.place_order("SCP", 10, xchange_client.Side.SELL)
+            # Buy the basket of stocks for ETF 1 (SCP)
             await self.place_order("EPT", 3, xchange_client.Side.BUY)
             await self.place_order("IGM", 3, xchange_client.Side.BUY)
             await self.place_order("BRV", 4, xchange_client.Side.BUY)
@@ -114,7 +122,6 @@ class MyXchangeClient(xchange_client.XChangeClient):
             await self.place_order("EPT", 2, xchange_client.Side.BUY)
             await self.place_order("DLO", 5, xchange_client.Side.BUY)
             await self.place_order("MKU", 3, xchange_client.Side.BUY)
-
 
     async def firesale(self):
         # Sells everything, good for end of round / algo?
@@ -140,19 +147,10 @@ class MyXchangeClient(xchange_client.XChangeClient):
         """This is a task that is started right before the bot connects and runs in the background."""
         await asyncio.sleep(2)
         print("Bot started")
-        await self.firesale()
-        for i in range(10):
-            await self.place_order("JMS",1,xchange_client.Side.BUY)
-            await asyncio.sleep(3)
-            await self.place_order("IGM", 5, xchange_client.Side.BUY)
-            await asyncio.sleep(3)
-
-            await self.place_order("IGM", 5, xchange_client.Side.SELL)
-            await asyncio.sleep(3)
-            await self.place_order("JMS", 1, xchange_client.Side.SELL)
-            await asyncio.sleep(3)
-            await self.spread("IGM")
-        await self.long_short_arbitrage()
+        # await self.firesale()
+        for i in range(100):
+            await self.long_short_arbitrage()
+            await asyncio.sleep(2)
         await self.firesale()
 
         """
@@ -200,11 +198,10 @@ class MyXchangeClient(xchange_client.XChangeClient):
         while True:
             await asyncio.sleep(3)
             for security, book in self.order_books.items():
-                sorted_bids = sorted((k,v) for k,v in book.bids.items() if v != 0)
-                sorted_asks = sorted((k,v) for k,v in book.asks.items() if v != 0)
+                sorted_bids = sorted((k, v) for k, v in book.bids.items() if v != 0)
+                sorted_asks = sorted((k, v) for k, v in book.asks.items() if v != 0)
                 print(f"Bids for {security}:\n{sorted_bids}")
                 print(f"Asks for {security}:\n{sorted_asks}")
-
 
     """
     async def view_book_for(self, sec: str):
@@ -216,6 +213,7 @@ class MyXchangeClient(xchange_client.XChangeClient):
                 print(f"Bids for {sec}:\n{sorted_bids}")
                 print(f"Asks for {sec}:\n{sorted_asks}")
     """
+
     async def start(self):
         """
         Creates tasks that can be run in the background. Then connects to the exchange
@@ -227,10 +225,11 @@ class MyXchangeClient(xchange_client.XChangeClient):
 
 
 async def main():
-    SERVER = 'staging.uchicagotradingcompetition.com:3333' # run on sandbox
-    my_client = MyXchangeClient(SERVER,"ucla","alakazam-ponyta-4981")
+    SERVER = 'staging.uchicagotradingcompetition.com:3333'  # run on sandbox
+    my_client = MyXchangeClient(SERVER, "ucla", "alakazam-ponyta-4981")
     await my_client.start()
     return
+
 
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
