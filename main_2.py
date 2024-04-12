@@ -177,8 +177,6 @@ class MyXchangeClient(xchange_client.XChangeClient):
                 else:
                     order_id = await self.place_order(symbol, abs(position), xchange_client.Side.BUY)
                     print(f"Placed buy order for {abs(position)} shares of {symbol} (Long) - Order ID: {order_id}")
-                order_id = await self.place_order(symbol, abs(position), xchange_client.Side.BUY)
-                print(f"Placed buy order for {abs(position)} shares of {symbol} (Short) - Order ID: {order_id}")
                 await asyncio.sleep(5)
         print("All positions have been sold")
 
