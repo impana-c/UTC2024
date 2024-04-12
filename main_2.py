@@ -107,7 +107,6 @@ class MyXchangeClient(xchange_client.XChangeClient):
 
         if (ept_ask is not None and dlo_ask is not None and mku_ask is not None and jak_bid is not None):
             total_stock_cost_jak = 2 * ept_ask + 5 * dlo_ask + 3 * mku_ask
-            _, jak_bid = await self.spread("JAK")
             jak_diff = total_stock_cost_jak + self.edge + self.swap_fee - (jak_bid * 10)
         else: 
             jak_diff = None
