@@ -150,15 +150,35 @@ class MyXchangeClient(xchange_client.XChangeClient):
         # Sell all long positions
         for symbol, position in self.positions.items():
             if position > 0 and symbol != 'cash':  # Ignore 'cash' position
-                order_id = await self.place_order(symbol, abs(position), xchange_client.Side.SELL)
-                print(f"Placed sell order for {abs(position)} shares of {symbol} (Long) - Order ID: {order_id}")
+                if abs(position) > 40:
+                    mod = abs(position) % 40
+                    iter = abs(position) / 40
+                    for i in range(iter):
+                        order_id = await self.place_order(symbol, 40, xchange_client.Side.SELL)
+                        print(f"Placed sell order for {40} shares of {symbol} (Long) - Order ID: {order_id}")
+                    order_id = await self.place_order(symbol, mod, xchange_client.Side.SELL)
+                    print(f"Placed sell order for {mod} shares of {symbol} (Long) - Order ID: {order_id}")
+                else:
+                    order_id = await self.place_order(symbol, abs(position), xchange_client.Side.SELL)
+                    print(f"Placed sell order for {abs(position)} shares of {symbol} (Long) - Order ID: {order_id}")
                 await asyncio.sleep(5)
 
         # Sell all short positions
         for symbol, position in self.positions.items():
             if position < 0 and symbol != 'cash':  # Ignore 'cash' position
+                if abs(position) > 40:
+                    mod = abs(position) % 40
+                    iter = abs(position) / 40
+                    for i in range(iter):
+                        order_id = await self.place_order(symbol, 40, xchange_client.Side.BUY)
+                        print(f"Placed buy order for {40} shares of {symbol} (Long) - Order ID: {order_id}")
+                    order_id = await self.place_order(symbol, mod, xchange_client.Side.BUY)
+                    print(f"Placed buy order for {mod} shares of {symbol} (Long) - Order ID: {order_id}")
+                else:
+                    order_id = await self.place_order(symbol, abs(position), xchange_client.Side.BUY)
+                    print(f"Placed buy order for {abs(position)} shares of {symbol} (Long) - Order ID: {order_id}")
                 order_id = await self.place_order(symbol, abs(position), xchange_client.Side.BUY)
-                print(f"Placed sell order for {abs(position)} shares of {symbol} (Short) - Order ID: {order_id}")
+                print(f"Placed buy order for {abs(position)} shares of {symbol} (Short) - Order ID: {order_id}")
                 await asyncio.sleep(5)
         print("All positions have been sold")
 
@@ -168,6 +188,10 @@ class MyXchangeClient(xchange_client.XChangeClient):
         print("Bot started")
         # await self.firesale()
         for i in range(100):
+            # check if we reach the limit of absolute position
+            for symbol, position in self.positions.items():
+                if abs(position) > 200 and symbol != 'cash':
+                    await self.firesale()
             await self.long_short_arbitrage()
             await asyncio.sleep(2)
         await self.firesale()
