@@ -52,7 +52,7 @@ class MyXchangeClient(xchange_client.XChangeClient):
                 bid_price = int(highest_bid[0])
                 ask_price = int(lowest_ask[0])
                 spread = ask_price - bid_price
-                print(f"Spread for {asset_name} = {spread}")
+                # print(f"Spread for {asset_name} = {spread}")
                 return lowest_ask[0], highest_bid[0]
 
         return None,None
@@ -115,27 +115,31 @@ class MyXchangeClient(xchange_client.XChangeClient):
         if scp_diff is None:
             pass
         elif scp_diff < 0:
+            print("short SCP")
             await self.place_order("SCP", 10, xchange_client.Side.SELL)
             # Buy the basket of stocks for ETF 1 (SCP)
             await self.place_order("EPT", 3, xchange_client.Side.BUY)
             await self.place_order("IGM", 3, xchange_client.Side.BUY)
             await self.place_order("BRV", 4, xchange_client.Side.BUY)
         elif scp_diff > 0:
+            print("long SCP")
             await self.place_order("SCP", 10, xchange_client.Side.BUY)
             # Buy the basket of stocks for ETF 1 (SCP)
             await self.place_order("EPT", 3, xchange_client.Side.SELL)
             await self.place_order("IGM", 3, xchange_client.Side.SELL)
             await self.place_order("BRV", 4, xchange_client.Side.SELL)
 
-        if jak_diff is not None:
+        if jak_diff is None:
             pass
         elif jak_diff < 0:
+            print("short JAK")
             await self.place_order("JAK", 10, xchange_client.Side.SELL)
             # Buy the basket of stocks for ETF 2 (JAK)
             await self.place_order("EPT", 2, xchange_client.Side.BUY)
             await self.place_order("DLO", 5, xchange_client.Side.BUY)
             await self.place_order("MKU", 3, xchange_client.Side.BUY)
         elif jak_diff > 0:
+            print("long JAK")
             await self.place_order("JAK", 10, xchange_client.Side.BUY)
             # Buy the basket of stocks for ETF 2 (JAK)
             await self.place_order("EPT", 2, xchange_client.Side.SELL)
