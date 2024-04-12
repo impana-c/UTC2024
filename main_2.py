@@ -192,7 +192,7 @@ class MyXchangeClient(xchange_client.XChangeClient):
         for i in range(100):
             # check if we reach the limit of absolute position
             for symbol, position in self.positions.items():
-                if abs(position) > 200 and symbol != 'cash':
+                if abs(position) == 200 and symbol != 'cash':
                     await self.firesale()
             await self.long_short_arbitrage()
             await asyncio.sleep(2)
