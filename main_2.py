@@ -95,11 +95,12 @@ class MyXchangeClient(xchange_client.XChangeClient):
         # print({igm_ask})
         brv_ask, _ = await self.spread("BRV")
         # print({brv_ask})
+        _, scp_bid = await self.spread("SCP")
+        _, jak_bid = await self.spread("JAK")
 
         # Calculate the total cost of buying the basket of stocks for ETF 1 and ETF 2
         if (ept_ask is not None and igm_ask is not None and brv_ask is not None and scp_bid is not None):
             total_stock_cost_scp = 3 * ept_ask + 3 * igm_ask + 4 * brv_ask
-            _, scp_bid = await self.spread("SCP")
             scp_diff = total_stock_cost_scp + self.edge + self.swap_fee - (scp_bid * 10)
         else:
             scp_diff = None
