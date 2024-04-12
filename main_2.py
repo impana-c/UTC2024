@@ -55,7 +55,7 @@ class MyXchangeClient(xchange_client.XChangeClient):
                 print(f"Spread for {asset_name} = {spread}")
                 return lowest_ask[0], highest_bid[0]
 
-        return None
+        return None,None
 
     async def bot_handle_cancel_response(self, order_id: str, success: bool, error: Optional[str]) -> None:
 
@@ -97,40 +97,45 @@ class MyXchangeClient(xchange_client.XChangeClient):
         # print({brv_ask})
 
         # Calculate the total cost of buying the basket of stocks for ETF 1 and ETF 2
-        total_stock_cost_scp = 3 * ept_ask + 3 * igm_ask + 4 * brv_ask
-        total_stock_cost_jak = 2 * ept_ask + 5 * dlo_ask + 3 * mku_ask
+        if (ept_ask is not None and igm_ask is not None and brv_ask is not None and scp_bid is not None):
+            total_stock_cost_scp = 3 * ept_ask + 3 * igm_ask + 4 * brv_ask
+            _, scp_bid = await self.spread("SCP")
+            scp_diff = total_stock_cost_scp + self.edge + self.swap_fee - (scp_bid * 10)
+        else:
+            scp_diff = None
 
-        # Get the highest bid for ETF 1 (SCP) and ETF 2 (JAK)
-        _, scp_bid = await self.spread("SCP")
-        # print({scp_bid})
-        _, jak_bid = await self.spread("JAK")
-        # print({jak_bid})
+        if (ept_ask is not None and dlo_ask is not None and mku_ask is not None and jak_bid is not None):
+            total_stock_cost_jak = 2 * ept_ask + 5 * dlo_ask + 3 * mku_ask
+            _, jak_bid = await self.spread("JAK")
+            jak_diff = total_stock_cost_jak + self.edge + self.swap_fee - (jak_bid * 10)
+        else: 
+            jak_diff = None
 
-        # Check if the cost of buying the basket + edge is less than the highest bid for ETF 1
-        scp_diff = total_stock_cost_scp + self.edge + self.swap_fee - (scp_bid * 10)
         # Returns positive values around $400 to $600
-        if scp_diff < 0:
+        if scp_diff is None:
+            pass
+        elif scp_diff < 0:
             await self.place_order("SCP", 10, xchange_client.Side.SELL)
             # Buy the basket of stocks for ETF 1 (SCP)
             await self.place_order("EPT", 3, xchange_client.Side.BUY)
             await self.place_order("IGM", 3, xchange_client.Side.BUY)
             await self.place_order("BRV", 4, xchange_client.Side.BUY)
-        if scp_diff > 0:
+        elif scp_diff > 0:
             await self.place_order("SCP", 10, xchange_client.Side.BUY)
             # Buy the basket of stocks for ETF 1 (SCP)
             await self.place_order("EPT", 3, xchange_client.Side.SELL)
             await self.place_order("IGM", 3, xchange_client.Side.SELL)
             await self.place_order("BRV", 4, xchange_client.Side.SELL)
 
-        jak_diff = total_stock_cost_jak + self.edge + self.swap_fee - (jak_bid * 10)
-
-        if jak_diff < 0:
+        if jak_diff is not None:
+            pass
+        elif jak_diff < 0:
             await self.place_order("JAK", 10, xchange_client.Side.SELL)
             # Buy the basket of stocks for ETF 2 (JAK)
             await self.place_order("EPT", 2, xchange_client.Side.BUY)
             await self.place_order("DLO", 5, xchange_client.Side.BUY)
             await self.place_order("MKU", 3, xchange_client.Side.BUY)
-        if jak_diff > 0:
+        elif jak_diff > 0:
             await self.place_order("JAK", 10, xchange_client.Side.BUY)
             # Buy the basket of stocks for ETF 2 (JAK)
             await self.place_order("EPT", 2, xchange_client.Side.SELL)
