@@ -158,7 +158,7 @@ class MyXchangeClient(xchange_client.XChangeClient):
             if position > 0 and symbol != 'cash':  # Ignore 'cash' position
                 if abs(position) > 40:
                     mod = abs(position) % 40
-                    iter = abs(position) / 40
+                    iter = int(abs(position) / 40)
                     for i in range(iter):
                         order_id = await self.place_order(symbol, 40, xchange_client.Side.SELL)
                         print(f"Placed sell order for {40} shares of {symbol} (Long) - Order ID: {order_id}")
@@ -174,7 +174,7 @@ class MyXchangeClient(xchange_client.XChangeClient):
             if position < 0 and symbol != 'cash':  # Ignore 'cash' position
                 if abs(position) > 40:
                     mod = abs(position) % 40
-                    iter = abs(position) / 40
+                    iter = int(abs(position) / 40)
                     for i in range(iter):
                         order_id = await self.place_order(symbol, 40, xchange_client.Side.BUY)
                         print(f"Placed buy order for {40} shares of {symbol} (Long) - Order ID: {order_id}")
