@@ -1,4 +1,3 @@
-
 from typing import Optional
 
 from xchangelib import xchange_client
@@ -20,7 +19,7 @@ class MyXchangeClient(xchange_client.XChangeClient):
     '''A shell client with the methods that can be implemented to interact with the xchange.'''
 
     swap_fee = 5.0
-    edge = 0.97
+    edge = 1.0
 
     def __init__(self, host: str, username: str, password: str):
         super().__init__(host, username, password)
@@ -101,17 +100,15 @@ class MyXchangeClient(xchange_client.XChangeClient):
 
         # Calculate the total cost of buying the basket of stocks for ETF 1 and ETF 2
         if (ept_ask is not None and igm_ask is not None and brv_ask is not None and scp_bid is not None):
-            total_stock_cost_scp = 3 * ept_ask + 3 * igm_ask + 4 * brv_ask 
-            total_stock_cost_scp *= self.edge
-            scp_diff = total_stock_cost_scp + self.swap_fee - (scp_bid * 10)
+            total_stock_cost_scp = 3 * ept_ask + 3 * igm_ask + 4 * brv_ask
+            scp_diff = total_stock_cost_scp + self.edge + self.swap_fee - (scp_bid * 10)
         else:
             scp_diff = None
 
         if (ept_ask is not None and dlo_ask is not None and mku_ask is not None and jak_bid is not None):
             total_stock_cost_jak = 2 * ept_ask + 5 * dlo_ask + 3 * mku_ask
-            total_stock_cost_jak *= self.edge
-            jak_diff = total_stock_cost_jak + self.swap_fee - (jak_bid * 10)
-        else: 
+            jak_diff = total_stock_cost_jak + self.edge + self.swap_fee - (jak_bid * 10)
+        else:
             jak_diff = None
 
         # Returns positive values around $400 to $600
@@ -157,33 +154,15 @@ class MyXchangeClient(xchange_client.XChangeClient):
         # Sell all long positions
         for symbol, position in self.positions.items():
             if position > 0 and symbol != 'cash':  # Ignore 'cash' position
-                if abs(position) > 40:
-                    mod = abs(position) % 40
-                    iter = int(abs(position) / 40)
-                    for i in range(iter):
-                        order_id = await self.place_order(symbol, 40, xchange_client.Side.SELL)
-                        print(f"Placed sell order for {40} shares of {symbol} (Long) - Order ID: {order_id}")
-                    order_id = await self.place_order(symbol, mod, xchange_client.Side.SELL)
-                    print(f"Placed sell order for {mod} shares of {symbol} (Long) - Order ID: {order_id}")
-                else:
-                    order_id = await self.place_order(symbol, abs(position), xchange_client.Side.SELL)
-                    print(f"Placed sell order for {abs(position)} shares of {symbol} (Long) - Order ID: {order_id}")
+                order_id = await self.place_order(symbol, abs(position), xchange_client.Side.SELL)
+                print(f"Placed sell order for {abs(position)} shares of {symbol} (Long) - Order ID: {order_id}")
                 await asyncio.sleep(5)
 
         # Sell all short positions
         for symbol, position in self.positions.items():
             if position < 0 and symbol != 'cash':  # Ignore 'cash' position
-                if abs(position) > 40:
-                    mod = abs(position) % 40
-                    iter = int(abs(position) / 40)
-                    for i in range(iter):
-                        order_id = await self.place_order(symbol, 40, xchange_client.Side.BUY)
-                        print(f"Placed buy order for {40} shares of {symbol} (Long) - Order ID: {order_id}")
-                    order_id = await self.place_order(symbol, mod, xchange_client.Side.BUY)
-                    print(f"Placed buy order for {mod} shares of {symbol} (Long) - Order ID: {order_id}")
-                else:
-                    order_id = await self.place_order(symbol, abs(position), xchange_client.Side.BUY)
-                    print(f"Placed buy order for {abs(position)} shares of {symbol} (Long) - Order ID: {order_id}")
+                order_id = await self.place_order(symbol, abs(position), xchange_client.Side.BUY)
+                print(f"Placed sell order for {abs(position)} shares of {symbol} (Short) - Order ID: {order_id}")
                 await asyncio.sleep(5)
         print("All positions have been sold")
 
@@ -191,44 +170,13 @@ class MyXchangeClient(xchange_client.XChangeClient):
         """This is a task that is started right before the bot connects and runs in the background."""
         await asyncio.sleep(2)
         print("Bot started")
-
-        """Places strategic bid and ask orders for 'EPT' based on the current market conditions."""
-        stock_symbols = ['BRV', 'DLO', 'EPT', 'IGM', 'MKU']
-
-        while True:  # Loop to place orders repeatedly
-            for stock in stock_symbols:
-                # Get the current highest bid and lowest ask for the stock
-                lowest_ask, highest_bid = await self.spread(stock)
-
-                if highest_bid is not None:
-                    # Place a bid order $10 below the highest bid
-                    bid_price = highest_bid - 10
-                    await self.place_order(stock, 3, xchange_client.Side.BUY, bid_price)
-                    await asyncio.sleep(0.25)
-                    # await self.place_order(stock,3, xchange_client.Side.SELL,highest_bid)
-
-                if lowest_ask is not None:
-                    # Place an ask order $10 above the lowest ask
-                    ask_price = lowest_ask + 10
-                    await self.place_order(stock, 3, xchange_client.Side.SELL, ask_price)
-                    await asyncio.sleep(0.25)
-                    #nawait self.place_order(stock, 3, xchange_client.Side.BUY,lowest_ask)
-                await asyncio.sleep(0.1)
-
-            await asyncio.sleep(0.25)  # Sleep to rate limit the orders
-
-        """
         # await self.firesale()
         for i in range(100):
-            # check if we reach the limit of absolute position
-            for symbol, position in self.positions.items():
-                if abs(position) == 200 and symbol != 'cash':
-                    await self.firesale()
             await self.long_short_arbitrage()
             await asyncio.sleep(2)
         await self.firesale()
 
-
+        """
         # Place market order for individual ETF items
         await self.place_order("EPT",3, xchange_client.Side.BUY)
         await asyncio.sleep(5)
@@ -300,7 +248,7 @@ class MyXchangeClient(xchange_client.XChangeClient):
 
 
 async def main():
-    SERVER = 'staging.uchicagotradingcompetition.com:3333'  # run on sandbox
+    SERVER = 'dayof.uchicagotradingcompetition.com:3333'  # run on sandbox
     my_client = MyXchangeClient(SERVER, "ucla", "alakazam-ponyta-4981")
     await my_client.start()
     return
