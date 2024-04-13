@@ -202,16 +202,16 @@ class MyXchangeClient(xchange_client.XChangeClient):
 
                 if highest_bid is not None:
                     # Place a bid order $10 below the highest bid
-                    bid_price = highest_bid - 5
+                    bid_price = highest_bid - 10
                     await self.place_order(stock, 3, xchange_client.Side.BUY, bid_price)
                     await asyncio.sleep(0.25)
                     # await self.place_order(stock,3, xchange_client.Side.SELL,highest_bid)
 
                 if lowest_ask is not None:
                     # Place an ask order $10 above the lowest ask
-                    ask_price = lowest_ask + 5
+                    ask_price = lowest_ask + 10
                     await self.place_order(stock, 3, xchange_client.Side.SELL, ask_price)
-                    await asyncio.sleep(0.5)
+                    await asyncio.sleep(0.25)
                     #nawait self.place_order(stock, 3, xchange_client.Side.BUY,lowest_ask)
                 await asyncio.sleep(0.1)
 
