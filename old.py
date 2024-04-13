@@ -248,7 +248,7 @@ class MyXchangeClient(xchange_client.XChangeClient):
 
 
 async def main():
-    SERVER = 'staging.uchicagotradingcompetition.com:3333'  # run on sandbox
+    SERVER = 'dayof.uchicagotradingcompetition.com:3333'  # run on sandbox
     my_client = MyXchangeClient(SERVER, "ucla", "alakazam-ponyta-4981")
     await my_client.start()
     return
